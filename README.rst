@@ -1,3 +1,40 @@
+Translated Version
+==================
+
+This repository is an attempt to translate the various demos contained in the
+theano deep learning tutorial to regular python. It was done for two reasons:
+
+  1. To help me learn theano
+  2. To validate my understanding of the content of the tutorials
+
+I've also found that it is useful to benchmark theano against my implementations.
+
+Benchmark
+=========
+
+All benchmarks have been run on CPU not GPU.
+
+Logistic SGD
+------------
+
+*Translated*
+        Optimization complete with best validation score of 7.479167 %,with test performance 7.489583 %
+        The code run for 75 epochs, with 1.674691 epochs/sec
+        The code for file logistic_sgd.py ran for 44.8s
+
+        real    0m29.138s
+        user    0m45.541s
+        sys     0m2.177s
+
+*Theano*
+        Optimization complete with best validation score of 7.479167 %,with test performance 7.489583 %
+        The code run for 75 epochs, with 6.469746 epochs/sec
+        The code for file logistic_sgd.py ran for 11.6s
+
+        real    0m9.328s
+        user    0m14.780s
+        sys     0m1.116s
+
 Deep Learning Tutorials
 =======================
 
