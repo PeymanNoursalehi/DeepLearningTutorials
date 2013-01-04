@@ -82,7 +82,6 @@ class LogisticRegression(object):
     def p_y_given_x(self, X):
         # compute vector of class-membership probabilities in symbolic form
         dt = numpy.dot(X, self.W) + self.b
-        #print "Dot prod", X.shape, self.W.shape, self.b.shape, "Yielded", dt.shape
         return nnet.softmax(dt)
 
     def y_pred(self, X):
@@ -166,6 +165,7 @@ def load_data(dataset):
     f = gzip.open(dataset, 'rb')
     train_set, valid_set, test_set = cPickle.load(f)
     f.close()
+
     #train_set, valid_set, test_set format: tuple(input, target)
     #input is an numpy.ndarray of 2 dimensions (a matrix)
     #witch row's correspond to an example. target is a
@@ -196,21 +196,13 @@ def train_model(
     X = train_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
     y = train_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
 
-    #print "Training batch", minibatch_index, batch_size
-    #print X.shape
-    #print y.shape
-
     ## the cost we minimize during training is the negative log likelihood of
     ## the model in symbolic format
     cost = classifier.negative_log_likelihood(X, y)
 
-    #print "Cost", cost
-
     ## compute the gradient of cost with respect to theta = (W,b)
     g_W = g_w_fn(X, classifier.W, classifier.b, y)
     g_b = g_b_fn(X, classifier.W, classifier.b, y)
-
-    #print "Updates", g_W, g_b
 
     ## specify how to update the parameters of the model as a dictionary
     classifier.W = classifier.W - learning_rate * g_W
@@ -247,42 +239,6 @@ def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
     # construct the logistic regression class
     # Each MNIST image has size 28*28
     classifier = LogisticRegression(n_in=28 * 28, n_out=10)
-
-    ## the cost we minimize during training is the negative log likelihood of
-    ## the model in symbolic format
-    #cost = classifier.negative_log_likelihood(y)
-
-    ## compiling a Theano function that computes the mistakes that are made by
-    ## the model on a minibatch
-    #test_model = theano.function(inputs=[index],
-            #outputs=classifier.errors(y),
-            #givens={
-                #x: test_set_x[index * batch_size: (index + 1) * batch_size],
-                #y: test_set_y[index * batch_size: (index + 1) * batch_size]})
-
-    #test_model = theano.function(inputs=[index],
-            #outputs=classifier.errors(y),
-            #givens={
-                #x: valid_set_x[index * batch_size:(index + 1) * batch_size],
-                #y: valid_set_y[index * batch_size:(index + 1) * batch_size]})
-
-    ## compute the gradient of cost with respect to theta = (W,b)
-    #g_W = T.grad(cost=cost, wrt=classifier.W)
-    #g_b = T.grad(cost=cost, wrt=classifier.b)
-
-    ## specify how to update the parameters of the model as a dictionary
-    #updates = {classifier.W: classifier.W - learning_rate * g_W,
-               #classifier.b: classifier.b - learning_rate * g_b}
-
-    ## compiling a Theano function `train_model` that returns the cost, but in
-    ## the same time updates the parameter of the model based on the rules
-    ## defined in `updates`
-    #train_model = theano.function(inputs=[index],
-            #outputs=cost,
-            #updates=updates,
-            #givens={
-                #x: train_set_x[index * batch_size:(index + 1) * batch_size],
-                #y: train_set_y[index * batch_size:(index + 1) * batch_size]})
 
     ###############
     # TRAIN MODEL #
