@@ -10,3 +10,7 @@ def softmax(w):
 
     dist = e / numpy.sum(e, axis=1).reshape(maxes.shape[0], 1)
     return dist
+
+
+def sigmoid(eta):
+    return 1. / (1. + numpy.exp(-eta))
