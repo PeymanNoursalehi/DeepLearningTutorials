@@ -80,9 +80,9 @@ class HiddenLayer(object):
         #        tanh.
         if W is None:
             W_values = numpy.asarray(rng.uniform(
-                    low=-numpy.sqrt(6. / (n_in + n_out)),
-                    high=numpy.sqrt(6. / (n_in + n_out)),
-                    size=(n_in, n_out)), dtype=theano.config.floatX)
+                low=-numpy.sqrt(6. / (n_in + n_out)),
+                high=numpy.sqrt(6. / (n_in + n_out)),
+                size=(n_in, n_out)), dtype=theano.config.floatX)
             if activation == theano.tensor.nnet.sigmoid:
                 W_values *= 4
 
@@ -113,7 +113,7 @@ class MLP(object):
     class).
     """
 
-    def __init__(self, rng, input, n_in, n_hidden, n_out):
+    def __init__(self, rng, input, n_in, n_hidden, n_out, hW=None, hb=None):
         """Initialize the parameters for the multilayer perceptron
 
         :type rng: numpy.random.RandomState
@@ -141,6 +141,7 @@ class MLP(object):
         # layer; this can be replaced by a SigmoidalLayer, or a layer
         # implementing any other nonlinearity
         self.hiddenLayer = HiddenLayer(rng=rng, input=input,
+                                       W=hW, b=hb,
                                        n_in=n_in, n_out=n_hidden,
                                        activation=T.tanh)
 
@@ -154,12 +155,12 @@ class MLP(object):
         # L1 norm ; one regularization option is to enforce L1 norm to
         # be small
         self.L1 = abs(self.hiddenLayer.W).sum() \
-                + abs(self.logRegressionLayer.W).sum()
+            + abs(self.logRegressionLayer.W).sum()
 
         # square of L2 norm ; one regularization option is to enforce
         # square of L2 norm to be small
         self.L2_sqr = (self.hiddenLayer.W ** 2).sum() \
-                    + (self.logRegressionLayer.W ** 2).sum()
+            + (self.logRegressionLayer.W ** 2).sum()
 
         # negative log likelihood of the MLP is given by the negative
         # log likelihood of the output of the model, computed in the
@@ -234,22 +235,22 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
     # the model plus the regularization terms (L1 and L2); cost is expressed
     # here symbolically
     cost = classifier.negative_log_likelihood(y) \
-         + L1_reg * classifier.L1 \
-         + L2_reg * classifier.L2_sqr
+        + L1_reg * classifier.L1 \
+        + L2_reg * classifier.L2_sqr
 
     # compiling a Theano function that computes the mistakes that are made
     # by the model on a minibatch
     test_model = theano.function(inputs=[index],
-            outputs=classifier.errors(y),
-            givens={
-                x: test_set_x[index * batch_size:(index + 1) * batch_size],
-                y: test_set_y[index * batch_size:(index + 1) * batch_size]})
+                                 outputs=classifier.errors(y),
+                                 givens={
+                                 x: test_set_x[index * batch_size:(index + 1) * batch_size],
+                                 y: test_set_y[index * batch_size:(index + 1) * batch_size]})
 
     validate_model = theano.function(inputs=[index],
-            outputs=classifier.errors(y),
-            givens={
-                x: valid_set_x[index * batch_size:(index + 1) * batch_size],
-                y: valid_set_y[index * batch_size:(index + 1) * batch_size]})
+                                     outputs=classifier.errors(y),
+                                     givens={
+                                     x: valid_set_x[index * batch_size:(index + 1) * batch_size],
+                                     y: valid_set_y[index * batch_size:(index + 1) * batch_size]})
 
     # compute the gradient of cost with respect to theta (sotred in params)
     # the resulting gradients will be stored in a list gparams
@@ -271,10 +272,10 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
     # in the same time updates the parameter of the model based on the rules
     # defined in `updates`
     train_model = theano.function(inputs=[index], outputs=cost,
-            updates=updates,
-            givens={
-                x: train_set_x[index * batch_size:(index + 1) * batch_size],
-                y: train_set_y[index * batch_size:(index + 1) * batch_size]})
+                                  updates=updates,
+                                  givens={
+                                  x: train_set_x[index * batch_size:(index + 1) * batch_size],
+                                  y: train_set_y[index * batch_size:(index + 1) * batch_size]})
 
     ###############
     # TRAIN MODEL #
@@ -324,7 +325,7 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
                 if this_validation_loss < best_validation_loss:
                     #improve patience if loss improvement is good enough
                     if this_validation_loss < best_validation_loss *  \
-                           improvement_threshold:
+                            improvement_threshold:
                         patience = max(patience, iter * patience_increase)
 
                     best_validation_loss = this_validation_loss

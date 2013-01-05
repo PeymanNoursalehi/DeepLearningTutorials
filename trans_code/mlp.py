@@ -64,8 +64,6 @@ class HiddenLayer(object):
         :param activation: Non linearity to be applied in the hidden
                            layer
         """
-        self.input = input
-
         # `W` is initialized with `W_values` which is uniformely sampled
         # from sqrt(-6./(n_in+n_hidden)) and sqrt(6./(n_in+n_hidden))
         # for tanh activation function
@@ -93,6 +91,7 @@ class HiddenLayer(object):
         self.b = b
 
         self.activation = activation
+
         self.output = (self.lin_output if activation is None
                        else self.calc_activation)
 
@@ -155,7 +154,6 @@ class MLP(object):
             n_in=n_hidden,
             n_out=n_out)
 
-
         ## the parameters of the model are the parameters of the two layer it is
         ## made out of
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
@@ -182,13 +180,12 @@ def train_model(
     X = train_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
     y = train_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
 
-    # Need intermediate values as they are input to logistic layer
-    h_X = classifier.hiddenLayer.output(X)
-
     updates = g_grad_fn(
-        L1_reg, L2_reg, X, h_X, y,
+        L1_reg, L2_reg, X, y,
         classifier.logRegressionLayer.W, classifier.logRegressionLayer.b,
         classifier.hiddenLayer.W, classifier.hiddenLayer.b)
+
+    #print classifier.hiddenLayer.W - learning_rate * updates[0]
 
     classifier.hiddenLayer.W =\
         classifier.hiddenLayer.W - learning_rate * updates[0]

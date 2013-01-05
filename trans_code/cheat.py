@@ -54,7 +54,7 @@ def theano_mlp_prime():
     L2_reg_term = T.fscalar('L2_reg')
 
     hidden_x = T.fmatrix('hidden_x')
-    log_x = T.fmatrix('log_x')
+
     y = T.ivector('y')
 
     log_layer_w = T.fmatrix('w')
@@ -62,6 +62,10 @@ def theano_mlp_prime():
 
     hidden_layer_w = T.fmatrix('hidden_w')
     hidden_layer_b = T.fvector('hidden_b')
+
+    # Calculate input to logistic layer as activation of hidden layer
+    lin_output = T.dot(hidden_x, hidden_layer_w) + hidden_layer_b
+    log_x = T.tanh(lin_output)
 
     # Calculate the negative log likelihood of the hidden layer
     # on the input
@@ -96,11 +100,11 @@ def theano_mlp_prime():
     # Build out a list of gradients to calculate (weights and biases for hidden
     # & log)
     gparams = []
-    gparams.append(T.grad(cost_hidden, hidden_layer_w))
-    gparams.append(T.grad(cost_hidden, hidden_layer_b))
+    gparams.append(T.grad(cost_log, hidden_layer_w))
+    gparams.append(T.grad(cost_log, hidden_layer_b))
     gparams.append(T.grad(cost_log, log_layer_w))
     gparams.append(T.grad(cost_log, log_layer_b))
 
     return theano.function(
-        [L1_reg_term, L2_reg_term, hidden_x, log_x, y,
+        [L1_reg_term, L2_reg_term, hidden_x, y,
             log_layer_w, log_layer_b, hidden_layer_w, hidden_layer_b], gparams)
