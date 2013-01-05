@@ -27,7 +27,7 @@ import os
 import sys
 import time
 import nnet
-
+import cheat
 import numpy
 import config
 
@@ -184,24 +184,31 @@ class MLP(object):
         return (self.hiddenLayer.W ** 2).sum() +\
             (self.logRegressionLayer.W ** 2).sum()
 
+g_grad_fn = cheat.theano_mlp_prime()
+
 
 def train_model(
         classifier, learning_rate, train_set_x, train_set_y, minibatch_index, batch_size, L1_reg, L2_reg):
     X = train_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
     y = train_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
 
-    L1 = L1_reg * classifier.L1_reg()
-    L2 = L2_reg * classifier.L2_sqr()
-
     h_X = classifier.hiddenLayer.output(X)
     cost = classifier.negative_log_likelihood(h_X, y)
-    #+\
-        #+\
 
-    #print L1
-    #print L2
-    #print h_X
-    #print cost
+    updates = g_grad_fn(
+        L1_reg, L2_reg, X, h_X, y,
+        classifier.logRegressionLayer.W, classifier.logRegressionLayer.b,
+        classifier.hiddenLayer.W, classifier.hiddenLayer.b)
+
+    classifier.hiddenLayer.W =\
+        classifier.hiddenLayer.W - learning_rate * updates[0]
+    classifier.hiddenLayer.b =\
+        classifier.hiddenLayer.b - learning_rate * updates[1]
+
+    classifier.logRegressionLayer.W =\
+        classifier.logRegressionLayer.W - learning_rate * updates[2]
+    classifier.logRegressionLayer.b =\
+        classifier.logRegressionLayer.b - learning_rate * updates[3]
 
 """
     # the cost we minimize during training is the negative log likelihood of

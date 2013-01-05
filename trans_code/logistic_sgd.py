@@ -81,10 +81,6 @@ class LogisticRegression(object):
 
     def p_y_given_x(self, X):
         # compute vector of class-membership probabilities in symbolic form
-        print "X", X.shape
-        print "W", self.W.shape
-        print "b", self.b.shape
-
         dt = numpy.dot(X, self.W) + self.b
         return nnet.softmax(dt)
 
