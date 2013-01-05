@@ -210,9 +210,9 @@ def train_model(
 
 
 def test_model(
-        classifier, valid_set_x, valid_set_y, minibatch_index, batch_size):
-    X = valid_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
-    y = valid_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
+        classifier, test_set_x, test_set_y, minibatch_index, batch_size):
+    X = test_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
+    y = test_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
 
     return classifier.errors(X, y)
 

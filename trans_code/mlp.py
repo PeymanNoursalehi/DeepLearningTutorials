@@ -156,33 +156,23 @@ class MLP(object):
             n_out=n_out)
 
 
-        ## negative log likelihood of the MLP is given by the negative
-        ## log likelihood of the output of the model, computed in the
-        ## logistic regression layer
-        self.negative_log_likelihood = self.logRegressionLayer.negative_log_likelihood
-
-        ## same holds for the function computing the number of errors
-        self.errors = self.logRegressionLayer.errors
-
         ## the parameters of the model are the parameters of the two layer it is
         ## made out of
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
 
-    def L1_reg(self):
-        # L1 norm ; one regularization option is to enforce L1 norm to
-        # be small
+    def negative_log_likelihood(self, X, y):
+        ## negative log likelihood of the MLP is given by the negative
+        ## log likelihood of the output of the model, computed in the
+        ## logistic regression layer
 
-        #self.L1 = abs(self.hiddenLayer.W).sum() \
-            #+ abs(self.logRegressionLayer.W).sum()
-        return abs(self.hiddenLayer.W).sum() + abs(self.logRegressionLayer.W)
+        h_X = self.hiddenLayer.output(X)
+        return self.logRegressionLayer.negative_log_likelihood(h_X, y)
 
-    def L2_sqr(self):
-        ## square of L2 norm ; one regularization option is to enforce
-        ## square of L2 norm to be small
-        #self.L2_sqr = (self.hiddenLayer.W ** 2).sum() \
-            #+ (self.logRegressionLayer.W ** 2).sum()
-        return (self.hiddenLayer.W ** 2).sum() +\
-            (self.logRegressionLayer.W ** 2).sum()
+    def errors(self, X, y):
+        ## same holds for the function computing the number of errors
+
+        h_X = self.hiddenLayer.output(X)
+        return self.logRegressionLayer.errors(h_X, y)
 
 g_grad_fn = cheat.theano_mlp_prime()
 
@@ -192,8 +182,8 @@ def train_model(
     X = train_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
     y = train_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
 
+    # Need intermediate values as they are input to logistic layer
     h_X = classifier.hiddenLayer.output(X)
-    cost = classifier.negative_log_likelihood(h_X, y)
 
     updates = g_grad_fn(
         L1_reg, L2_reg, X, h_X, y,
@@ -243,6 +233,14 @@ def train_model(
                                   x: train_set_x[index * batch_size:(index + 1) * batch_size],
                                   y: train_set_y[index * batch_size:(index + 1) * batch_size]})
 """
+
+
+def test_model(
+        classifier, test_set_x, test_set_y, minibatch_index, batch_size):
+    X = test_set_x[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
+    y = test_set_y[minibatch_index * batch_size:(minibatch_index + 1) * batch_size]
+
+    return classifier.errors(X, y)
 
 
 def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
@@ -384,47 +382,49 @@ def test_mlp(learning_rate=0.01, L1_reg=0.00, L2_reg=0.0001, n_epochs=1000,
             ## iteration number
             iter = epoch * n_train_batches + minibatch_index
 
-            #if (iter + 1) % validation_frequency == 0:
-                ## compute zero-one loss on validation set
-                #validation_losses = [validate_model(i) for i
-                                     #in xrange(n_valid_batches)]
-                #this_validation_loss = numpy.mean(validation_losses)
+            if (iter + 1) % validation_frequency == 0:
+                # compute zero-one loss on validation set
+                validation_losses = [test_model(
+                    classifier, valid_set_x, valid_set_y, i,
+                    batch_size) for i in xrange(n_valid_batches)]
+                this_validation_loss = numpy.mean(validation_losses)
 
-                #print('epoch %i, minibatch %i/%i, validation error %f %%' %
-                     #(epoch, minibatch_index + 1, n_train_batches,
-                      #this_validation_loss * 100.))
+                print('epoch %i, minibatch %i/%i, validation error %f %%' %
+                     (epoch, minibatch_index + 1, n_train_batches,
+                      this_validation_loss * 100.))
 
-                ## if we got the best validation score until now
-                #if this_validation_loss < best_validation_loss:
-                    ##improve patience if loss improvement is good enough
-                    #if this_validation_loss < best_validation_loss *  \
-                            #improvement_threshold:
-                        #patience = max(patience, iter * patience_increase)
+                # if we got the best validation score until now
+                if this_validation_loss < best_validation_loss:
+                    #improve patience if loss improvement is good enough
+                    if this_validation_loss < best_validation_loss *  \
+                            improvement_threshold:
+                        patience = max(patience, iter * patience_increase)
 
-                    #best_validation_loss = this_validation_loss
-                    #best_iter = iter
+                    best_validation_loss = this_validation_loss
+                    best_iter = iter
 
                     ## test it on the test set
-                    #test_losses = [test_model(i) for i
-                                   #in xrange(n_test_batches)]
-                    #test_score = numpy.mean(test_losses)
+                    test_losses = [test_model(
+                        classifier, test_set_x, test_set_y, i,
+                        batch_size) for i in xrange(n_test_batches)]
+                    test_score = numpy.mean(test_losses)
 
-                    #print(('     epoch %i, minibatch %i/%i, test error of '
-                           #'best model %f %%') %
-                          #(epoch, minibatch_index + 1, n_train_batches,
-                           #test_score * 100.))
+                    print(('     epoch %i, minibatch %i/%i, test error of '
+                           'best model %f %%') %
+                          (epoch, minibatch_index + 1, n_train_batches,
+                           test_score * 100.))
 
-            #if patience <= iter:
-                    #done_looping = True
-                    #break
+            if patience <= iter:
+                    done_looping = True
+                    break
 
-    #end_time = time.clock()
-    #print(('Optimization complete. Best validation score of %f %% '
-           #'obtained at iteration %i, with test performance %f %%') %
-          #(best_validation_loss * 100., best_iter, test_score * 100.))
-    #print >> sys.stderr, ('The code for file ' +
-                          #os.path.split(__file__)[1] +
-                          #' ran for %.2fm' % ((end_time - start_time) / 60.))
+    end_time = time.clock()
+    print(('Optimization complete. Best validation score of %f %% '
+           'obtained at iteration %i, with test performance %f %%') %
+          (best_validation_loss * 100., best_iter, test_score * 100.))
+    print >> sys.stderr, ('The code for file ' +
+                          os.path.split(__file__)[1] +
+                          ' ran for %.2fm' % ((end_time - start_time) / 60.))
 
 
 if __name__ == '__main__':
